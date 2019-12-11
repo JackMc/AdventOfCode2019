@@ -359,7 +359,6 @@ func equalTo(state *InterpreterState) error {
 func adjustRelativeBase(state *InterpreterState) error {
 	adjustment := state.readArgument(0)
 	state.relativeBase += adjustment
-	fmt.Println("Relative base is now", state.relativeBase)
 
 	return nil
 }
