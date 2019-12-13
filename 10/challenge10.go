@@ -35,8 +35,21 @@ func (a *point) distance(b point) float64 {
 	return math.Sqrt(float64(dx*dx + dy*dy))
 }
 
+func between(a point, b point, c point) bool {
+	left := min(a.x, b.x)
+	right := max(a.x, b.x)
+	top := min(a.y, b.y)
+	bottom := max(a.y, b.y)
+
+	if c.x >= left && c.x <= right && c.y >= top && c.y <= bottom {
+		return true
+	}
+
+	return false
+}
+
 func main() {
-	fileContentsBytes, err := ioutil.ReadFile("sample")
+	fileContentsBytes, err := ioutil.ReadFile("smallsample")
 
 	if err != nil {
 		panic("Couldn't read input file")
@@ -69,12 +82,12 @@ func main() {
 				continue
 			}
 
-			// oppositeVisible, exists := reachableAsteroids[destinationAsteroid][originAsteroid]
+			oppositeVisible, exists := reachableAsteroids[destinationAsteroid][originAsteroid]
 
-			// if exists {
-			// 	reachableAsteroids[originAsteroid][destinationAsteroid] = oppositeVisible
-			// 	continue
-			// }
+			if exists {
+				reachableAsteroids[originAsteroid][destinationAsteroid] = oppositeVisible
+				continue
+			}
 
 			visible := true
 
@@ -96,9 +109,10 @@ func main() {
 					yForX := float64(potentiallyObstructingAsteroid.x)*slope + yIntercept
 					howCloseToLine := yForX - float64(potentiallyObstructingAsteroid.y)
 
-					if howCloseToLine == 0 {
+					if math.Abs(howCloseToLine) < 0.0001 && between(originAsteroid, destinationAsteroid, potentiallyObstructingAsteroid) {
 						// We know that it's on the same line segment. Is it
 						// between the two points?
+
 						visible = false
 						break
 					}
@@ -122,6 +136,9 @@ func main() {
 		}
 	}
 
+	maxPoint := point{-1, -1}
+	maxCount := 0
+
 	for origin, visibleAsteroidMap := range reachableAsteroids {
 		count := 0
 		for _, isVisible := range visibleAsteroidMap {
@@ -130,8 +147,13 @@ func main() {
 			}
 		}
 
-		fmt.Println(origin, "can see", count, "asteroids")
+		if count > maxCount {
+			maxPoint = origin
+			maxCount = count
+		}
 	}
 
-	fmt.Println(reachableAsteroids[point{4, 0}])
+	fmt.Println(maxPoint, maxCount)
+
+	// PART 2
 }
