@@ -58,26 +58,26 @@ func main() {
 	fileContents := string(fileContentsBytes)
 	splitByNewline := strings.Split(fileContents, "\n")
 	grid := make([][]string, len(splitByNewline))
-	asteroids := []point{}
+	asteroids := map[point]struct{}{}
 
 	for yCoord, rowString := range splitByNewline {
 		grid[yCoord] = strings.Split(rowString, "")
 
 		for xCoord, itemInPosition := range grid[yCoord] {
 			if itemInPosition == "#" {
-				asteroids = append(asteroids, point{xCoord, yCoord})
+				asteroids[point{xCoord, yCoord}] = struct{}{}
 			}
 		}
 	}
 
 	reachableAsteroids := map[point]map[point]bool{}
 
-	for _, asteroid := range asteroids {
+	for asteroid := range asteroids {
 		reachableAsteroids[asteroid] = map[point]bool{}
 	}
 
-	for _, originAsteroid := range asteroids {
-		for _, destinationAsteroid := range asteroids {
+	for originAsteroid := range asteroids {
+		for destinationAsteroid := range asteroids {
 			if originAsteroid == destinationAsteroid {
 				continue
 			}
@@ -101,7 +101,7 @@ func main() {
 				slope := float64(yDelta) / float64(xDelta)
 				// b = y - mx
 				yIntercept := float64(originY) - slope*float64(originX)
-				for _, potentiallyObstructingAsteroid := range asteroids {
+				for potentiallyObstructingAsteroid := range asteroids {
 					if potentiallyObstructingAsteroid == originAsteroid || potentiallyObstructingAsteroid == destinationAsteroid {
 						continue
 					}
@@ -136,7 +136,7 @@ func main() {
 		}
 	}
 
-	maxPoint := point{-1, -1}
+	asteroidWithStation := point{-1, -1}
 	maxCount := 0
 
 	for origin, visibleAsteroidMap := range reachableAsteroids {
@@ -148,12 +148,23 @@ func main() {
 		}
 
 		if count > maxCount {
-			maxPoint = origin
+			asteroidWithStation = origin
 			maxCount = count
 		}
 	}
 
-	fmt.Println(maxPoint, maxCount)
+	fmt.Println(asteroidWithStation, maxCount)
 
 	// PART 2
+	// Angle, 0 to 360.
+	angle := 0
+
+	for len(asteroids) > 0 {
+		if angle == 0 || angle == 180 {
+
+		} else {
+
+		}
+		angle = (angle + 1) % 360
+	}
 }
