@@ -4,12 +4,21 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math"
+	"os"
 	"strconv"
 	"strings"
 )
 
 func min(a, b int) int {
 	if a < b {
+		return a
+	}
+
+	return b
+}
+
+func max(a, b int) int {
+	if a > b {
 		return a
 	}
 
@@ -84,7 +93,7 @@ func readInput() map[string]formula {
 	// maps results to reactants
 	formulas := map[string]formula{}
 
-	inputBytes, err := ioutil.ReadFile("bigsample1")
+	inputBytes, err := ioutil.ReadFile(os.Args[1])
 
 	if err != nil {
 		fmt.Println(err)
@@ -116,28 +125,35 @@ func solveRecursiveImpl(need chemical, formulas map[string]formula, leftover map
 
 	sumOre := 0
 	ore := 0
+
 	times := int(math.Ceil(float64(need.amount) / float64(formula.result.amount)))
 
-	fmt.Println("Satisfying requirement", need, "with formula", formula, "(", times, "times)")
+	fmt.Println("Satisfying requirement", need, "with formula", formula)
+
+	fmt.Println(leftover)
+	// if the amount needed is less than the amount left over, just take the amount needed
+	leftoverReactant := leftover[need.name]
+	// The required amount of reactant to require at least one less execution
+	goalReactant := formula.result.amount * (times - 1)
+	needIfAllLeftoverUsed := max(0, need.amount-leftoverReactant)
+	if needIfAllLeftoverUsed <= goalReactant {
+		originalNeed := need
+		usedLeftover := need.amount - goalReactant
+		adjustedNeedAmount := need.amount - usedLeftover
+		times = int(math.Ceil(float64(adjustedNeedAmount) / float64(formula.result.amount)))
+		leftover[formula.result.name] -= usedLeftover
+		// We need less of it now
+		need.amount = adjustedNeedAmount
+		fmt.Println("Used", usedLeftover, "leftover", formula.result.name, "on", originalNeed)
+	} else if leftoverReactant != 0 {
+		fmt.Println("Not using", leftoverReactant, "for", formula.result.name, "because it wouldn't decrease waste")
+	}
 
 	for _, reactant := range formula.reactants {
 		amountNeededForReaction := reactant.amount * times
 
-		// if the amount needed is less than the amount left over, just take the amount needed
-		leftoverReactant := leftover[reactant.name]
-		if leftoverReactant >= reactant.amount {
-			usedReactant := reactant.amount * (leftoverReactant / reactant.amount)
-			amountNeededForReaction -= usedReactant
-			leftover[reactant.name] -= usedReactant
-			fmt.Println("[", formula, "] Used", usedReactant, "leftover", reactant.name, "on", reactant)
-		} else if leftoverReactant != 0 {
-			fmt.Println("[", formula, "] Not using", leftoverReactant, "for", reactant, "because it wouldn't decrease waste")
-		}
-
-		if amountNeededForReaction > 0 {
-			leftover, ore = solveRecursiveImpl(chemical{reactant.name, amountNeededForReaction}, formulas, leftover)
-			sumOre += ore
-		}
+		leftover, ore = solveRecursiveImpl(chemical{reactant.name, amountNeededForReaction}, formulas, leftover)
+		sumOre += ore
 	}
 
 	amountLeftover := (formula.result.amount * times) - need.amount
